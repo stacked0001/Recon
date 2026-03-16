@@ -1,8 +1,8 @@
 SEVERITY_POINTS = {
-    "critical": 25,
-    "high":     15,
-    "medium":    7,
-    "low":       3,
+    "critical": 20,
+    "high":     10,
+    "medium":    5,
+    "low":       1,
     "info":      0,
 }
 

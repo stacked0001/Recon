@@ -71,6 +71,25 @@ def _check(url: str, path: str, label: str, severity: str, validator, session: r
     return None
 
 
+def _homepage_fingerprint(base_url: str, session: requests.Session):
+    """Returns (status, size) of homepage to detect catch-all servers."""
+    try:
+        r = session.get(base_url, timeout=5, verify=False, allow_redirects=True)
+        return (r.status_code, len(r.content))
+    except Exception:
+        return (None, 0)
+
+
+def _is_catchall(base_url: str, session: requests.Session) -> bool:
+    """Check if server returns 200 for random nonexistent paths."""
+    try:
+        r = session.get(f"{base_url}/zz_recon_test_xq9k2", timeout=4,
+                        verify=False, allow_redirects=False)
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
 def scan(target: str) -> list[dict]:
     findings = []
     session = requests.Session()
@@ -79,9 +98,17 @@ def scan(target: str) -> list[dict]:
     base_urls = [f"https://{target}", f"http://{target}"]
     seen = set()
 
+    # Detect catch-all servers upfront — skip path scanning if true
+    catchall_bases = set()
+    for base in base_urls:
+        if _is_catchall(base, session):
+            catchall_bases.add(base)
+
     with ThreadPoolExecutor(max_workers=20) as ex:
         futures = []
         for base in base_urls:
+            if base in catchall_bases:
+                continue  # Skip — server returns 200 for everything
             for path, severity, label, validator in PATHS:
                 futures.append(ex.submit(_check, base, path, label, severity, validator, session))
 
@@ -99,7 +126,15 @@ def scan(target: str) -> list[dict]:
                         "remediation": _remediation(path),
                     })
 
-    if not findings:
+    if catchall_bases and not findings:
+        findings.append({
+            "category": "path",
+            "severity": "info",
+            "title": "Path scanning skipped — catch-all server detected",
+            "detail": "Server returns HTTP 200 for all URLs. Path results would be false positives.",
+            "remediation": None,
+        })
+    elif not findings:
         findings.append({
             "category": "path",
             "severity": "info",
