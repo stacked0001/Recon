@@ -1,42 +1,40 @@
-# Recon-CLI
+# Recon
 
 Fast, free security reconnaissance tool for pentesters, developers, and bug bounty hunters.
 
 Scans any domain or IP in under 2 minutes and outputs a colour-coded terminal report + optional PDF.
 
 ```
-$ recon example.com
-
-  Target:  example.com
-  Modules: Port Scan, SSL/TLS, HTTP Headers, DNS, Subdomains, Paths, WHOIS
+$ python -m reconx hvacestimators.net
 
   ── PORT SCAN ──────────────────────────────────────────
-  🔴 CRITICAL  Open port 6379/Redis
-  🟠 HIGH      Open port 22/SSH
+  ⚪ INFO      Open port 80/HTTP
   ⚪ INFO      Open port 443/HTTPS
 
   ── SSL/TLS ────────────────────────────────────────────
   ⚪ INFO      TLS protocol: TLSv1.3
   🟡 MEDIUM    SSL certificate expires in 18 days
 
-  ── HTTP HEADERS ───────────────────────────────────────
-  🟡 MEDIUM    Missing security header: Content-Security-Policy
-  🟡 MEDIUM    Missing security header: Strict-Transport-Security
+  ── SENSITIVE PATHS ────────────────────────────────────
+  🔴 CRITICAL  Git repository exposed
+  🔴 CRITICAL  Environment file exposed
+  🔴 CRITICAL  Database backup exposed
 
-  ┌─────────────────────────────────────────┐
-  │  Grade: C   Score: 47/100   MODERATE    │
-  └─────────────────────────────────────────┘
+  ╭─────────────────────────────────────────────────────╮
+  │  Grade: F   Risk Score: 100/100   CRITICAL          │
+  │  (0 = no risk, 100 = critical — lower is better)    │
+  ╰─────────────────────────────────────────────────────╯
 ```
 
 ## Install
 
 ```bash
-pipx install reconx
+pipx install git+https://github.com/stacked0001/Recon.git
 ```
 
-> Don't have pipx? `pip install pipx` then `pipx ensurepath` (restart terminal after)
+> Don't have pipx? Run `pip install pipx` first.
 
-Then run from anywhere:
+Then scan any domain:
 
 ```bash
 python -m reconx example.com
@@ -46,25 +44,25 @@ python -m reconx example.com
 
 ```bash
 # Basic scan
-recon example.com
+python -m reconx example.com
 
 # Save a PDF report
-recon example.com --pdf report.pdf
+python -m reconx example.com --pdf report.pdf
 
 # JSON output (great for pipelines)
-recon example.com --json > findings.json
+python -m reconx example.com --json > findings.json
 
 # Run specific modules only
-recon example.com --modules port,ssl,headers
+python -m reconx example.com --modules port,ssl,headers
 
-# Show details for every finding
-recon example.com --verbose
+# Show full details for every finding
+python -m reconx example.com --verbose
 
 # Scan an IP
-recon 192.168.1.1 --modules port,ssl
+python -m reconx 192.168.1.1
 ```
 
-## Modules
+## What it checks
 
 | Module | What it checks |
 |--------|---------------|
@@ -78,8 +76,6 @@ recon 192.168.1.1 --modules port,ssl
 
 ## Risk Scoring
 
-Each finding contributes to a 0–100 risk score:
-
 | Severity | Points |
 |----------|--------|
 | Critical | 25 |
@@ -89,14 +85,6 @@ Each finding contributes to a 0–100 risk score:
 | Info | 0 |
 
 Grades: **A** (0–20, Minimal) · **B** (21–40, Low) · **C** (41–60, Moderate) · **D** (61–80, High) · **F** (81–100, Critical)
-
-## Development install
-
-```bash
-git clone https://github.com/YOUR_USERNAME/reconx.git
-cd reconx
-pipx install -e .
-```
 
 ## Requirements
 
